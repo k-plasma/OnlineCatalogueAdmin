@@ -1,5 +1,12 @@
 package adminforonlinecatalogue;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -17,6 +24,20 @@ public class Main_Window extends javax.swing.JFrame {
      */
     public Main_Window() {
         initComponents();
+    }
+    
+    public Connection getConnection() {
+        Connection con = null;
+        
+        try {
+            con = DriverManager.getConnection("jdbc:mysql://localhost/products_db", "root", "");
+            JOptionPane.showMessageDialog(null, "Connected");
+            return con;
+        } catch (SQLException ex) {
+            Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(null, "Not Connected");
+            return null;
+        }
     }
 
     /**
