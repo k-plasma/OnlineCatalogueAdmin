@@ -7,8 +7,11 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
@@ -85,6 +88,31 @@ public class Main_Window extends javax.swing.JFrame {
         
         return image;
     }
+    //To Display Data in JTable, first fill the ArrayList
+    public ArrayList<Product> getProductList() {
+        
+        ArrayList<Product> productList = new ArrayList<Product>();
+            Connection con = getConnection();
+            String query = "SELECT * FROM products";
+            
+            Statement st;
+            ResultSet rs;
+            
+        try {
+            st = con.createStatement();
+            rs = st.executeQuery(query);
+            Product product;
+            
+            while(rs.next()) {
+                product = new Product(rs.getInt("id"), rs.getString("name"),Float.parseFloat("price"),rs.getString("add_date"),rs.getBytes("image"));
+                productList.add(product);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return productList;
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -110,7 +138,7 @@ public class Main_Window extends javax.swing.JFrame {
         Btn_Choose_Image = new javax.swing.JButton();
         Btn_Insert = new javax.swing.JButton();
         Btn_Update = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
+        Btn_Delete = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
@@ -175,7 +203,12 @@ public class Main_Window extends javax.swing.JFrame {
             }
         });
 
-        jButton4.setText("Delete");
+        Btn_Delete.setText("Delete");
+        Btn_Delete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Btn_DeleteActionPerformed(evt);
+            }
+        });
 
         jButton5.setText("!! First !!");
 
@@ -223,7 +256,7 @@ public class Main_Window extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(Btn_Update)
                         .addGap(18, 18, 18)
-                        .addComponent(jButton4)
+                        .addComponent(Btn_Delete)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jButton5)
                         .addGap(18, 18, 18)
@@ -272,7 +305,7 @@ public class Main_Window extends javax.swing.JFrame {
                 .addGap(31, 31, 31)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(Btn_Update)
-                    .addComponent(jButton4)
+                    .addComponent(Btn_Delete)
                     .addComponent(jButton5)
                     .addComponent(jButton6)
                     .addComponent(jButton7)
@@ -402,6 +435,26 @@ public class Main_Window extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_Btn_UpdateActionPerformed
 
+    private void Btn_DeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_DeleteActionPerformed
+   
+        if(!txt_id.getText().equals("")){
+            try {
+                Connection con = getConnection();
+                PreparedStatement ps = con.prepareStatement("DELETE FROM products WHERE id = ?");
+                int id = Integer.parseInt(txt_id.getText());
+                ps.setInt(1, id);
+                ps.executeUpdate();
+                JOptionPane.showMessageDialog(null, "Product Deleted");
+            } catch (SQLException ex) {
+                Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(null, "Product Not Deleted");
+            }
+            
+        }else{
+            JOptionPane.showMessageDialog(null, "Product Not Deleted : Enter The Product Id");
+        }
+    }//GEN-LAST:event_Btn_DeleteActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -439,9 +492,9 @@ public class Main_Window extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Btn_Choose_Image;
+    private javax.swing.JButton Btn_Delete;
     private javax.swing.JButton Btn_Insert;
     private javax.swing.JButton Btn_Update;
-    private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
