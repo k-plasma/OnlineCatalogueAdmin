@@ -2,9 +2,13 @@ package adminforonlinecatalogue;
 
 import java.awt.Image;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
@@ -49,6 +53,23 @@ public class Main_Window extends javax.swing.JFrame {
         }
     }
     
+    public boolean checkInputs() {
+        if(txt_name.getText() == null
+           || txt_price.getText() == null
+           || txt_AddDate.getDate() == null
+                ){
+            return false;
+        }else {
+            try{
+                Float.parseFloat(txt_price.getText());
+                return true;
+            }catch(Exception ex) {
+                return false;
+            }
+        }
+                       
+    }
+    
     public ImageIcon ResizeImage(String imagePath, byte[] pic) {
         ImageIcon myImage = null;
         
@@ -80,15 +101,15 @@ public class Main_Window extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
-        jTextField5 = new javax.swing.JTextField();
-        jDateChooser1 = new com.toedter.calendar.JDateChooser();
+        txt_id = new javax.swing.JTextField();
+        txt_price = new javax.swing.JTextField();
+        txt_name = new javax.swing.JTextField();
+        txt_AddDate = new com.toedter.calendar.JDateChooser();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         Btn_Choose_Image = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
+        Btn_Insert = new javax.swing.JButton();
+        Btn_Update = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
@@ -115,13 +136,13 @@ public class Main_Window extends javax.swing.JFrame {
         jLabel5.setFont(new java.awt.Font("Ubuntu", 1, 18)); // NOI18N
         jLabel5.setText("Image:");
 
-        jTextField1.setPreferredSize(new java.awt.Dimension(59, 50));
+        txt_id.setPreferredSize(new java.awt.Dimension(59, 50));
 
-        jTextField2.setPreferredSize(new java.awt.Dimension(59, 50));
+        txt_price.setPreferredSize(new java.awt.Dimension(59, 50));
 
-        jTextField5.setPreferredSize(new java.awt.Dimension(59, 50));
+        txt_name.setPreferredSize(new java.awt.Dimension(59, 50));
 
-        jDateChooser1.setDateFormatString("yyy-MM-dd");
+        txt_AddDate.setDateFormatString("yyy-MM-dd");
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -140,9 +161,19 @@ public class Main_Window extends javax.swing.JFrame {
             }
         });
 
-        jButton2.setText("Insert");
+        Btn_Insert.setText("Insert");
+        Btn_Insert.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Btn_InsertActionPerformed(evt);
+            }
+        });
 
-        jButton3.setText("Update");
+        Btn_Update.setText("Update");
+        Btn_Update.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Btn_UpdateActionPerformed(evt);
+            }
+        });
 
         jButton4.setText("Delete");
 
@@ -177,20 +208,20 @@ public class Main_Window extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createSequentialGroup()
                             .addComponent(Btn_Choose_Image, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGap(72, 72, 72)
-                            .addComponent(jButton2))
+                            .addComponent(Btn_Insert))
                         .addGroup(jPanel1Layout.createSequentialGroup()
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(txt_price, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(txt_id, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(txt_AddDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGap(134, 134, 134)))
                     .addComponent(lbl_image, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 593, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jButton3)
+                        .addComponent(Btn_Update)
                         .addGap(18, 18, 18)
                         .addComponent(jButton4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -208,25 +239,25 @@ public class Main_Window extends javax.swing.JFrame {
                 .addGap(15, 15, 15)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel1)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txt_id, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel2)
-                    .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(29, 29, 29)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel3)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txt_price, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(29, 29, 29)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txt_AddDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 172, Short.MAX_VALUE)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(Btn_Choose_Image, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton2))
+                            .addComponent(Btn_Insert))
                         .addGap(236, 236, 236))
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
                         .addGap(33, 33, 33)
@@ -240,7 +271,7 @@ public class Main_Window extends javax.swing.JFrame {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 441, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(31, 31, 31)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton3)
+                    .addComponent(Btn_Update)
                     .addComponent(jButton4)
                     .addComponent(jButton5)
                     .addComponent(jButton6)
@@ -275,11 +306,101 @@ public class Main_Window extends javax.swing.JFrame {
             File selectedFile = file.getSelectedFile();
             String path = selectedFile.getAbsolutePath();
             lbl_image.setIcon(ResizeImage(path, null));
+            ImgPath = path;
         } 
         else{
             System.out.println("No File selected");
         }
     }//GEN-LAST:event_Btn_Choose_ImageActionPerformed
+
+    private void Btn_InsertActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_InsertActionPerformed
+        
+        if(checkInputs() && ImgPath != null) {
+            
+            try {
+                Connection con = getConnection();
+                PreparedStatement ps = con.prepareStatement("INSERT INTO products(name,price,add_date,image)"
+                        + "values(?,?,?,?) ");
+                ps.setString(1, txt_name.getText());
+                ps.setString(2, txt_price.getText());
+                
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyy-MM-dd");
+                String addDate = dateFormat.format(txt_AddDate.getDate());
+                ps.setString(3, addDate);
+                
+                InputStream img = new FileInputStream(new File(ImgPath));
+                ps.setBlob(4, img);
+                ps.executeUpdate();
+                JOptionPane.showMessageDialog(null, "Data Successfully Inserted");
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
+        }else{
+            JOptionPane.showMessageDialog(null, "One Or More Fields Are Empty!!!");
+        }
+    }//GEN-LAST:event_Btn_InsertActionPerformed
+
+    private void Btn_UpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_UpdateActionPerformed
+        if(checkInputs() && txt_id.getText() != null) {
+            String UpdateQuery = null;
+            PreparedStatement ps = null;
+            Connection con = getConnection();
+            
+            if(ImgPath == null){
+                try {
+                    UpdateQuery = "UPDATE products SET name = ?, price = ?"
+                            + ", add_date = ? WHERE id = ?";
+                    
+                    ps = con.prepareStatement(UpdateQuery);
+                    
+                    ps.setString(1, txt_name.getText());
+                    ps.setString(2, txt_price.getText());
+                    
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    String addDate = dateFormat.format(txt_AddDate.getDate());
+                    
+                    ps.setString(3, addDate);
+                    
+                    ps.setInt(4, Integer.parseInt(txt_id.getText()));
+                    
+                    ps.executeUpdate();
+                    
+                            } catch (SQLException ex) {
+                    Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }else{
+                try{
+                InputStream img = new FileInputStream(new File(ImgPath));
+                
+                UpdateQuery = "UPDATE products SET name = ?, price = ?"
+                            + ", add_date = ?, image = ? WHERE id = ?";
+                
+                ps = con.prepareStatement(UpdateQuery);
+                    
+                    ps.setString(1, txt_name.getText());
+                    ps.setString(2, txt_price.getText());
+                    
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    String addDate = dateFormat.format(txt_AddDate.getDate());
+                    
+                    ps.setString(3, addDate);
+                    
+                    ps.setBlob(4, img);
+                    
+                    ps.setInt(5, Integer.parseInt(txt_id.getText()));
+                    
+                    ps.executeUpdate();
+                    
+                    
+                }catch(Exception ex){
+                   JOptionPane.showMessageDialog(null, ex.getMessage());
+                }
+            }
+        }else{
+            JOptionPane.showMessageDialog(null, "One Or More Fields Are Empty Or Wrong");
+        }
+    }//GEN-LAST:event_Btn_UpdateActionPerformed
 
     /**
      * @param args the command line arguments
@@ -318,14 +439,13 @@ public class Main_Window extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Btn_Choose_Image;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
+    private javax.swing.JButton Btn_Insert;
+    private javax.swing.JButton Btn_Update;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
-    private com.toedter.calendar.JDateChooser jDateChooser1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -334,9 +454,10 @@ public class Main_Window extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField5;
     private javax.swing.JLabel lbl_image;
+    private com.toedter.calendar.JDateChooser txt_AddDate;
+    private javax.swing.JTextField txt_id;
+    private javax.swing.JTextField txt_name;
+    private javax.swing.JTextField txt_price;
     // End of variables declaration//GEN-END:variables
 }
