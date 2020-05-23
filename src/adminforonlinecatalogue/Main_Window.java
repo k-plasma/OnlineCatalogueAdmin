@@ -10,14 +10,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
 
 
 /*
@@ -37,17 +40,17 @@ public class Main_Window extends javax.swing.JFrame {
      */
     public Main_Window() {
         initComponents();
-        getConnection();
+        Show_Products_In_JTable();
     }
     
     String ImgPath = null;
+    int pos = 0;
     
     public Connection getConnection() {
         Connection con = null;
         
         try {
             con = DriverManager.getConnection("jdbc:mysql://localhost/products_db", "root", "");
-            JOptionPane.showMessageDialog(null, "Connected");
             return con;
         } catch (SQLException ex) {
             Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
@@ -104,7 +107,7 @@ public class Main_Window extends javax.swing.JFrame {
             Product product;
             
             while(rs.next()) {
-                product = new Product(rs.getInt("id"), rs.getString("name"),Float.parseFloat("price"),rs.getString("add_date"),rs.getBytes("image"));
+                product = new Product(rs.getInt("id"), rs.getString("name"),Float.parseFloat(rs.getString("price")),rs.getString("add_date"),rs.getBytes("image"));
                 productList.add(product);
             }
         } catch (SQLException ex) {
@@ -112,6 +115,42 @@ public class Main_Window extends javax.swing.JFrame {
         }
         
         return productList;
+    }
+    
+    //Next step is to Populate the JTable
+    public void Show_Products_In_JTable() {
+        ArrayList<Product> list = getProductList();
+        DefaultTableModel model = (DefaultTableModel)JTable_Products.getModel();
+        
+        model.setRowCount(0);
+        Object[] row = new Object[4];
+        for(int i = 0; i < list.size(); i++) {
+            row[0] = list.get(i).getId();
+            row[1] = list.get(i).getName();
+            row[2] = list.get(i).getPrice();
+            row[3] = list.get(i).getaddDate();
+            
+            model.addRow(row);
+        }
+    }
+    
+    public void ShowItem(int index){
+        
+            txt_id.setText(Integer.toString(getProductList().get(index).getId()));
+            txt_name.setText(getProductList().get(index).getName());
+            txt_price.setText(Float.toString(getProductList().get(index).getPrice()));
+            
+            
+        try {
+             Date addDate = null;
+            addDate = new SimpleDateFormat("yyyy-MM-dd").parse((String)getProductList().get(index).getaddDate());
+            txt_AddDate.setDate(addDate);
+            
+        } catch (ParseException ex) {
+            Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        lbl_image.setIcon(ResizeImage(null, getProductList().get(index).getImage()));
     }
 
     /**
@@ -134,15 +173,15 @@ public class Main_Window extends javax.swing.JFrame {
         txt_name = new javax.swing.JTextField();
         txt_AddDate = new com.toedter.calendar.JDateChooser();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        JTable_Products = new javax.swing.JTable();
         Btn_Choose_Image = new javax.swing.JButton();
         Btn_Insert = new javax.swing.JButton();
         Btn_Update = new javax.swing.JButton();
         Btn_Delete = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
-        jButton8 = new javax.swing.JButton();
+        Btn_First = new javax.swing.JButton();
+        Btn_Next = new javax.swing.JButton();
+        Btn_Previous = new javax.swing.JButton();
+        Btn_Last = new javax.swing.JButton();
         lbl_image = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -164,6 +203,7 @@ public class Main_Window extends javax.swing.JFrame {
         jLabel5.setFont(new java.awt.Font("Ubuntu", 1, 18)); // NOI18N
         jLabel5.setText("Image:");
 
+        txt_id.setEnabled(false);
         txt_id.setPreferredSize(new java.awt.Dimension(59, 50));
 
         txt_price.setPreferredSize(new java.awt.Dimension(59, 50));
@@ -172,7 +212,7 @@ public class Main_Window extends javax.swing.JFrame {
 
         txt_AddDate.setDateFormatString("yyy-MM-dd");
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        JTable_Products.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -180,7 +220,12 @@ public class Main_Window extends javax.swing.JFrame {
                 "ID", "Name", "Price", "Add Date"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
+        JTable_Products.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                JTable_ProductsMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(JTable_Products);
 
         Btn_Choose_Image.setText("Choose Image");
         Btn_Choose_Image.addActionListener(new java.awt.event.ActionListener() {
@@ -210,13 +255,33 @@ public class Main_Window extends javax.swing.JFrame {
             }
         });
 
-        jButton5.setText("!! First !!");
+        Btn_First.setText("!! First !!");
+        Btn_First.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Btn_FirstActionPerformed(evt);
+            }
+        });
 
-        jButton6.setText("Next >>");
+        Btn_Next.setText("Next >>");
+        Btn_Next.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Btn_NextActionPerformed(evt);
+            }
+        });
 
-        jButton7.setText("<< Previous");
+        Btn_Previous.setText("<< Previous");
+        Btn_Previous.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Btn_PreviousActionPerformed(evt);
+            }
+        });
 
-        jButton8.setText("Last !!!");
+        Btn_Last.setText("Last !!!");
+        Btn_Last.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Btn_LastActionPerformed(evt);
+            }
+        });
 
         lbl_image.setBackground(new java.awt.Color(254, 211, 104));
         lbl_image.setFont(new java.awt.Font("Ubuntu", 1, 12)); // NOI18N
@@ -258,13 +323,13 @@ public class Main_Window extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(Btn_Delete)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton5)
+                        .addComponent(Btn_First)
                         .addGap(18, 18, 18)
-                        .addComponent(jButton6)
+                        .addComponent(Btn_Next)
                         .addGap(18, 18, 18)
-                        .addComponent(jButton7)
+                        .addComponent(Btn_Previous)
                         .addGap(18, 18, 18)
-                        .addComponent(jButton8))))
+                        .addComponent(Btn_Last))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -306,10 +371,10 @@ public class Main_Window extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(Btn_Update)
                     .addComponent(Btn_Delete)
-                    .addComponent(jButton5)
-                    .addComponent(jButton6)
-                    .addComponent(jButton7)
-                    .addComponent(jButton8))
+                    .addComponent(Btn_First)
+                    .addComponent(Btn_Next)
+                    .addComponent(Btn_Previous)
+                    .addComponent(Btn_Last))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
@@ -364,6 +429,9 @@ public class Main_Window extends javax.swing.JFrame {
                 InputStream img = new FileInputStream(new File(ImgPath));
                 ps.setBlob(4, img);
                 ps.executeUpdate();
+                Show_Products_In_JTable();
+                
+                
                 JOptionPane.showMessageDialog(null, "Data Successfully Inserted");
                 
             } catch (Exception ex) {
@@ -398,6 +466,8 @@ public class Main_Window extends javax.swing.JFrame {
                     ps.setInt(4, Integer.parseInt(txt_id.getText()));
                     
                     ps.executeUpdate();
+                    Show_Products_In_JTable();
+                    JOptionPane.showMessageDialog(null, "Product Updated");
                     
                             } catch (SQLException ex) {
                     Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
@@ -424,6 +494,9 @@ public class Main_Window extends javax.swing.JFrame {
                     ps.setInt(5, Integer.parseInt(txt_id.getText()));
                     
                     ps.executeUpdate();
+                    Show_Products_In_JTable();
+                    
+                    JOptionPane.showMessageDialog(null, "Product Updated");
                     
                     
                 }catch(Exception ex){
@@ -444,6 +517,7 @@ public class Main_Window extends javax.swing.JFrame {
                 int id = Integer.parseInt(txt_id.getText());
                 ps.setInt(1, id);
                 ps.executeUpdate();
+                Show_Products_In_JTable();
                 JOptionPane.showMessageDialog(null, "Product Deleted");
             } catch (SQLException ex) {
                 Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
@@ -454,6 +528,37 @@ public class Main_Window extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Product Not Deleted : Enter The Product Id");
         }
     }//GEN-LAST:event_Btn_DeleteActionPerformed
+
+    private void JTable_ProductsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_JTable_ProductsMouseClicked
+        int index = JTable_Products.getSelectedRow();
+        ShowItem(index);
+    }//GEN-LAST:event_JTable_ProductsMouseClicked
+
+    private void Btn_FirstActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_FirstActionPerformed
+        pos = 0;
+        ShowItem(pos);
+    }//GEN-LAST:event_Btn_FirstActionPerformed
+
+    private void Btn_LastActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_LastActionPerformed
+       pos = getProductList().size()-1;
+       ShowItem(pos);
+    }//GEN-LAST:event_Btn_LastActionPerformed
+
+    private void Btn_NextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_NextActionPerformed
+       pos++;
+       if(pos>= getProductList().size()) {
+           pos = getProductList().size()-1;
+       }
+       ShowItem(pos);
+    }//GEN-LAST:event_Btn_NextActionPerformed
+
+    private void Btn_PreviousActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_PreviousActionPerformed
+        pos--;
+       if(pos < 0 ) {
+           pos = 0;
+       }
+       ShowItem(pos);
+    }//GEN-LAST:event_Btn_PreviousActionPerformed
 
     /**
      * @param args the command line arguments
@@ -493,12 +598,13 @@ public class Main_Window extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Btn_Choose_Image;
     private javax.swing.JButton Btn_Delete;
+    private javax.swing.JButton Btn_First;
     private javax.swing.JButton Btn_Insert;
+    private javax.swing.JButton Btn_Last;
+    private javax.swing.JButton Btn_Next;
+    private javax.swing.JButton Btn_Previous;
     private javax.swing.JButton Btn_Update;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
+    private javax.swing.JTable JTable_Products;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -506,7 +612,6 @@ public class Main_Window extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JLabel lbl_image;
     private com.toedter.calendar.JDateChooser txt_AddDate;
     private javax.swing.JTextField txt_id;
