@@ -40,29 +40,17 @@ public class Main_Window extends javax.swing.JFrame {
      */
     public Main_Window() {
         initComponents();
-        Show_Products_In_JTable();
+        //Show_Products_In_JTable();
     }
     
     String ImgPath = null;
     int pos = 0;
-    
-    public Connection getConnection() {
-        Connection con = null;
         
-        try {
-            con = DriverManager.getConnection("jdbc:mysql://localhost/products_db", "root", "");
-            return con;
-        } catch (SQLException ex) {
-            Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(null, "Not Connected");
-            return null;
-        }
-    }
-    
     public boolean checkInputs() {
         if(txt_name.getText() == null
            || txt_price.getText() == null
            || txt_AddDate.getDate() == null
+           || category.getText() == null
                 ){
             return false;
         }else {
@@ -91,66 +79,80 @@ public class Main_Window extends javax.swing.JFrame {
         
         return image;
     }
-    //To Display Data in JTable, first fill the ArrayList
-    public ArrayList<Product> getProductList() {
-        
-        ArrayList<Product> productList = new ArrayList<Product>();
-            Connection con = getConnection();
-            String query = "SELECT * FROM products";
-            
-            Statement st;
-            ResultSet rs;
-            
-        try {
-            st = con.createStatement();
-            rs = st.executeQuery(query);
-            Product product;
-            
-            while(rs.next()) {
-                product = new Product(rs.getInt("id"), rs.getString("name"),Float.parseFloat(rs.getString("price")),rs.getString("add_date"),rs.getBytes("image"));
-                productList.add(product);
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        return productList;
+    ArrayList<Product> MyList;
+    
+    
+    
+    public void setList(ArrayList<Product> A)
+    {
+        this.MyList = A;
+        Show_Products_In_JTable();
+    }
+    
+    Connection conn = null;
+    
+    public void setConnection(Connection c)
+    {
+        this.conn = c;
+    }
+    
+    public Connection getConnection()
+    {
+        return this.conn;
     }
     
     //Next step is to Populate the JTable
     public void Show_Products_In_JTable() {
-        ArrayList<Product> list = getProductList();
+        
         DefaultTableModel model = (DefaultTableModel)JTable_Products.getModel();
         
         model.setRowCount(0);
-        Object[] row = new Object[4];
-        for(int i = 0; i < list.size(); i++) {
-            row[0] = list.get(i).getId();
-            row[1] = list.get(i).getName();
-            row[2] = list.get(i).getPrice();
-            row[3] = list.get(i).getaddDate();
-            
+        Object[] row = new Object[6];
+        for(int i = 0; i < MyList.size(); i++) {
+            row[0] = MyList.get(i).getId();
+            row[1] = MyList.get(i).getName();
+            row[2] = MyList.get(i).getPrice();
+            row[3] = MyList.get(i).getaddDate();
+            row[4] = MyList.get(i).getCategory();
+            if(MyList.get(i).getCategory().compareToIgnoreCase("Clothes") == 0)
+            {
+                row[5] = MyList.get(i).getType();
+            }
+            else
+            {
+                row[5] = MyList.get(i).getLaces();
+            }
             model.addRow(row);
         }
     }
     
     public void ShowItem(int index){
         
-            txt_id.setText(Integer.toString(getProductList().get(index).getId()));
-            txt_name.setText(getProductList().get(index).getName());
-            txt_price.setText(Float.toString(getProductList().get(index).getPrice()));
+            txt_id.setText(Integer.toString(MyList.get(index).getId()));
+            txt_name.setText(MyList.get(index).getName());
+            txt_price.setText(Float.toString(MyList.get(index).getPrice()));
+            category.setText(MyList.get(index).getCategory());
+            if(MyList.get(index).getCategory().compareToIgnoreCase("Clothes") == 0)
+            {
+                type.setText(MyList.get(index).getType());
+            }
+            else
+            {
+                type.setText(MyList.get(index).getLaces());
+            }
+            
             
             
         try {
              Date addDate = null;
-            addDate = new SimpleDateFormat("yyyy-MM-dd").parse((String)getProductList().get(index).getaddDate());
+            addDate = new SimpleDateFormat("yyyy-MM-dd").parse((String)MyList.get(index).getaddDate());
             txt_AddDate.setDate(addDate);
             
         } catch (ParseException ex) {
             Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        lbl_image.setIcon(ResizeImage(null, getProductList().get(index).getImage()));
+        lbl_image.setIcon(ResizeImage(null, MyList.get(index).getImage()));
     }
 
     /**
@@ -171,7 +173,6 @@ public class Main_Window extends javax.swing.JFrame {
         txt_id = new javax.swing.JTextField();
         txt_price = new javax.swing.JTextField();
         txt_name = new javax.swing.JTextField();
-        txt_AddDate = new com.toedter.calendar.JDateChooser();
         jScrollPane1 = new javax.swing.JScrollPane();
         JTable_Products = new javax.swing.JTable();
         Btn_Choose_Image = new javax.swing.JButton();
@@ -183,6 +184,11 @@ public class Main_Window extends javax.swing.JFrame {
         Btn_Previous = new javax.swing.JButton();
         Btn_Last = new javax.swing.JButton();
         lbl_image = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        category = new javax.swing.JTextField();
+        type = new javax.swing.JTextField();
+        txt_AddDate = new com.toedter.calendar.JDateChooser();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -210,14 +216,12 @@ public class Main_Window extends javax.swing.JFrame {
 
         txt_name.setPreferredSize(new java.awt.Dimension(59, 50));
 
-        txt_AddDate.setDateFormatString("yyy-MM-dd");
-
         JTable_Products.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "ID", "Name", "Price", "Add Date"
+                "ID", "Name", "Price", "Add Date", "Category", "Type"
             }
         ));
         JTable_Products.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -288,48 +292,68 @@ public class Main_Window extends javax.swing.JFrame {
         lbl_image.setForeground(new java.awt.Color(196, 55, 253));
         lbl_image.setOpaque(true);
 
+        jLabel6.setFont(new java.awt.Font("Ubuntu", 1, 18)); // NOI18N
+        jLabel6.setText("Type:");
+
+        jLabel7.setFont(new java.awt.Font("Ubuntu", 1, 18)); // NOI18N
+        jLabel7.setText("Category:");
+
+        category.setPreferredSize(new java.awt.Dimension(59, 50));
+
+        type.setPreferredSize(new java.awt.Dimension(59, 50));
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(30, 30, 30)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4)
-                    .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel7)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jLabel4)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.TRAILING)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                            .addComponent(Btn_Choose_Image, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(72, 72, 72)
-                            .addComponent(Btn_Insert))
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(txt_price, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txt_id, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(txt_AddDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGap(134, 134, 134)))
-                    .addComponent(lbl_image, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 593, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(Btn_Update)
-                        .addGap(18, 18, 18)
-                        .addComponent(Btn_Delete)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(Btn_First)
-                        .addGap(18, 18, 18)
-                        .addComponent(Btn_Next)
-                        .addGap(18, 18, 18)
-                        .addComponent(Btn_Previous)
-                        .addGap(18, 18, 18)
-                        .addComponent(Btn_Last))))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGroup(jPanel1Layout.createSequentialGroup()
+                                    .addComponent(Btn_Choose_Image, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGap(72, 72, 72)
+                                    .addComponent(Btn_Insert))
+                                .addGroup(jPanel1Layout.createSequentialGroup()
+                                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(txt_price, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txt_id, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txt_name, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGap(134, 134, 134)))
+                            .addComponent(lbl_image, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txt_AddDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 593, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(Btn_Update)
+                                .addGap(18, 18, 18)
+                                .addComponent(Btn_Delete)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(Btn_First)
+                                .addGap(18, 18, 18)
+                                .addComponent(Btn_Next)
+                                .addGap(18, 18, 18)
+                                .addComponent(Btn_Previous)
+                                .addGap(18, 18, 18)
+                                .addComponent(Btn_Last))))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(category, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(type, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -350,21 +374,29 @@ public class Main_Window extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txt_AddDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 172, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(Btn_Choose_Image, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(Btn_Insert))
-                        .addGap(236, 236, 236))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addGap(33, 33, 33)
+                        .addGap(29, 29, 29)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(8, 8, 8)
                                 .addComponent(lbl_image, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 168, Short.MAX_VALUE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(Btn_Choose_Image, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(Btn_Insert))
+                        .addGap(31, 31, 31)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel7)
+                    .addComponent(category, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(11, 11, 11)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel6)
+                    .addComponent(type, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(94, 94, 94))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 441, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(31, 31, 31)
@@ -416,9 +448,9 @@ public class Main_Window extends javax.swing.JFrame {
         if(checkInputs() && ImgPath != null) {
             
             try {
-                Connection con = getConnection();
-                PreparedStatement ps = con.prepareStatement("INSERT INTO products(name,price,add_date,image)"
-                        + "values(?,?,?,?) ");
+                
+                PreparedStatement ps = conn.prepareStatement("INSERT INTO products(name,price,add_date,image,category,Type)"
+                        + "values(?,?,?,?,?,?) ");
                 ps.setString(1, txt_name.getText());
                 ps.setString(2, txt_price.getText());
                 
@@ -428,32 +460,68 @@ public class Main_Window extends javax.swing.JFrame {
                 
                 InputStream img = new FileInputStream(new File(ImgPath));
                 ps.setBlob(4, img);
+                ps.setString(5, category.getText());
+                ps.setString(6, type.getText());
+                
                 ps.executeUpdate();
-                Show_Products_In_JTable();
                 
                 
                 JOptionPane.showMessageDialog(null, "Data Successfully Inserted");
+                String query = "SELECT id,name,price,add_date,image,category,type FROM products";
+            
+                Statement st;
+                ResultSet rs;
+            
                 
+                st = conn.createStatement();
+                rs = st.executeQuery(query);
+                Product product;
+            
+                while(rs.next()) {
+                if(rs.getString("name").compareToIgnoreCase(txt_name.getText()) == 0)
+                {
+                    
+                    if(rs.getString("category").compareTo("Clothes") == 0)
+                    {
+                       
+                        product = new Clothes(rs.getInt("id"), rs.getString("name"),Float.parseFloat(rs.getString("price")),rs.getString("add_date"),rs.getBytes("image"),rs.getString("category"),rs.getString("Type"));
+                        MyList.add(product);
+                       
+                    }
+                    else
+                    {
+                        
+                        product = new Shoes(rs.getInt("id"), rs.getString("name"),Float.parseFloat(rs.getString("price")),rs.getString("add_date"),rs.getBytes("image"),rs.getString("category"),rs.getString("Type"));
+                        MyList.add(product);
+                        
+                    }
+                    break;
+                }
+                
+              }
+              
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage());
             }
         }else{
             JOptionPane.showMessageDialog(null, "One Or More Fields Are Empty!!!");
         }
+       
+        Show_Products_In_JTable();
     }//GEN-LAST:event_Btn_InsertActionPerformed
 
     private void Btn_UpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_UpdateActionPerformed
         if(checkInputs() && txt_id.getText() != null) {
             String UpdateQuery = null;
             PreparedStatement ps = null;
-            Connection con = getConnection();
+           ;
             
             if(ImgPath == null){
                 try {
                     UpdateQuery = "UPDATE products SET name = ?, price = ?"
-                            + ", add_date = ? WHERE id = ?";
+                            + ", add_date = ?, category = ?, Type = ? WHERE id = ?";
                     
-                    ps = con.prepareStatement(UpdateQuery);
+                    ps = conn.prepareStatement(UpdateQuery);
                     
                     ps.setString(1, txt_name.getText());
                     ps.setString(2, txt_price.getText());
@@ -462,12 +530,50 @@ public class Main_Window extends javax.swing.JFrame {
                     String addDate = dateFormat.format(txt_AddDate.getDate());
                     
                     ps.setString(3, addDate);
-                    
-                    ps.setInt(4, Integer.parseInt(txt_id.getText()));
+                    ps.setString(4, category.getText());
+                    ps.setString(5, type.getText());
+                    ps.setInt(6, Integer.parseInt(txt_id.getText()));
                     
                     ps.executeUpdate();
-                    Show_Products_In_JTable();
                     JOptionPane.showMessageDialog(null, "Product Updated");
+                    
+                    int id = Integer.parseInt(txt_id.getText());
+        
+                    for(int i=0;i<MyList.size();i++)
+                    {
+                        if(MyList.get(i).getId() == id)
+                        {
+                            MyList.get(i).setName(txt_name.getText());
+                            MyList.get(i).setPrice(Float.parseFloat(txt_price.getText()));
+                            MyList.get(i).setaddDate(addDate);
+                            MyList.get(i).setCategory(category.getText());
+                            if(MyList.get(i).getCategory().compareToIgnoreCase("Clothes") == 0)
+                            {
+                                MyList.get(i).setType(type.getText());
+                            }
+                            else
+                            {
+                                MyList.get(i).setLaces(type.getText());
+                            }
+                            if(i>0)
+                            {
+                                txt_id.setText(Integer.toString(MyList.get(i).getId()));
+                                txt_name.setText(MyList.get(i).getName());
+                                txt_price.setText(Float.toString(MyList.get(i).getPrice()));
+                                category.setText(MyList.get(i).getCategory());
+                                if(MyList.get(i).getCategory().compareToIgnoreCase("Clothes") == 0)
+                                {
+                                    type.setText(MyList.get(i).getType());
+                                }
+                                else
+                                {
+                                    type.setText(MyList.get(i).getLaces());
+                                }   
+                            }
+                            break;
+                        }
+                    }
+                    Show_Products_In_JTable();
                     
                             } catch (SQLException ex) {
                     Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
@@ -477,9 +583,9 @@ public class Main_Window extends javax.swing.JFrame {
                 InputStream img = new FileInputStream(new File(ImgPath));
                 
                 UpdateQuery = "UPDATE products SET name = ?, price = ?"
-                            + ", add_date = ?, image = ? WHERE id = ?";
+                            + ", add_date = ?, image = ?, category = ?, Type = ? WHERE id = ?";
                 
-                ps = con.prepareStatement(UpdateQuery);
+                ps = conn.prepareStatement(UpdateQuery);
                     
                     ps.setString(1, txt_name.getText());
                     ps.setString(2, txt_price.getText());
@@ -490,31 +596,120 @@ public class Main_Window extends javax.swing.JFrame {
                     ps.setString(3, addDate);
                     
                     ps.setBlob(4, img);
-                    
-                    ps.setInt(5, Integer.parseInt(txt_id.getText()));
+                    ps.setString(5, category.getText());
+                    ps.setString(6, type.getText());
+                    ps.setInt(7, Integer.parseInt(txt_id.getText()));
                     
                     ps.executeUpdate();
-                    Show_Products_In_JTable();
                     
                     JOptionPane.showMessageDialog(null, "Product Updated");
+                     
+                    int id = Integer.parseInt(txt_id.getText());
                     
+                    String sql = "Select image from products where id = "+id;
+                    Statement st;
+                    ResultSet rs;
+                    st = conn.createStatement();
+                    rs = st.executeQuery(sql);
+                    rs.next();
+                    byte[] image = rs.getBytes("image");
+        
+                    for(int i=0;i<MyList.size();i++)
+                    {
+                        if(MyList.get(i).getId() == id)
+                        {
+                            MyList.get(i).setName(txt_name.getText());
+                            MyList.get(i).setPrice(Float.parseFloat(txt_price.getText()));
+                            MyList.get(i).setaddDate(addDate);
+                            MyList.get(i).setImage(image);
+                            MyList.get(i).setCategory(category.getText());
+                            if(MyList.get(i).getCategory().compareToIgnoreCase("Clothes") == 0)
+                            {
+                                MyList.get(i).setType(type.getText());
+                            }
+                            else
+                            {
+                                MyList.get(i).setLaces(type.getText());
+                            }
+                            if(i>0)
+                            {
+                                txt_id.setText(Integer.toString(MyList.get(i).getId()));
+                                txt_name.setText(MyList.get(i).getName());
+                                txt_price.setText(Float.toString(MyList.get(i).getPrice()));
+                                category.setText(MyList.get(i).getCategory());
+                                if(MyList.get(i).getCategory().compareToIgnoreCase("Clothes") == 0)
+                                {
+                                    type.setText(MyList.get(i).getType());
+                                }
+                                else
+                                {
+                                    type.setText(MyList.get(i).getLaces());
+                                }  
+                            }
+                            break;
+                        }
+                    }
+                    Show_Products_In_JTable();
                     
                 }catch(Exception ex){
                    JOptionPane.showMessageDialog(null, ex.getMessage());
                 }
             }
-        }else{
+            
+            
+        }
+        else{
             JOptionPane.showMessageDialog(null, "One Or More Fields Are Empty Or Wrong");
         }
     }//GEN-LAST:event_Btn_UpdateActionPerformed
 
     private void Btn_DeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_DeleteActionPerformed
    
+        int id = Integer.parseInt(txt_id.getText());
+        
+        for(int i=0;i<MyList.size();i++)
+        {
+            if(MyList.get(i).getId() == id)
+            {
+                MyList.remove(i);
+                if(i>0)
+                {
+                    txt_id.setText(Integer.toString(MyList.get(i-1).getId()));
+                    txt_name.setText(MyList.get(i-1).getName());
+                    txt_price.setText(Float.toString(MyList.get(i-1).getPrice()));
+                    category.setText(MyList.get(i-1).getCategory());
+                    
+                    if(MyList.get(i-1).getCategory().compareToIgnoreCase("Clothes") == 0)
+                    {
+                        type.setText(MyList.get(i-1).getType());
+                    }
+                     else
+                    {
+                        type.setText(MyList.get(i-1).getLaces());
+                    }
+                    
+                    try{
+                    Date addDate = null;
+                    addDate = new SimpleDateFormat("yyyy-MM-dd").parse((String)MyList.get(i-1).getaddDate());
+                    txt_AddDate.setDate(addDate);
+            
+                    lbl_image.setIcon(ResizeImage(null, MyList.get(i-1).getImage()));
+                    }
+                    catch (ParseException ex) {
+                    Logger.getLogger(Main_Window.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                else
+                {
+                    JOptionPane.showMessageDialog(null, "No Element to show");
+                }
+            }
+        }
+        
         if(!txt_id.getText().equals("")){
             try {
-                Connection con = getConnection();
-                PreparedStatement ps = con.prepareStatement("DELETE FROM products WHERE id = ?");
-                int id = Integer.parseInt(txt_id.getText());
+                PreparedStatement ps = conn.prepareStatement("DELETE FROM products WHERE id = ?");
+                
                 ps.setInt(1, id);
                 ps.executeUpdate();
                 Show_Products_In_JTable();
@@ -540,14 +735,14 @@ public class Main_Window extends javax.swing.JFrame {
     }//GEN-LAST:event_Btn_FirstActionPerformed
 
     private void Btn_LastActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_LastActionPerformed
-       pos = getProductList().size()-1;
+       pos = MyList.size()-1;
        ShowItem(pos);
     }//GEN-LAST:event_Btn_LastActionPerformed
 
     private void Btn_NextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Btn_NextActionPerformed
        pos++;
-       if(pos>= getProductList().size()) {
-           pos = getProductList().size()-1;
+       if(pos>= MyList.size()) {
+           pos = MyList.size()-1;
        }
        ShowItem(pos);
     }//GEN-LAST:event_Btn_NextActionPerformed
@@ -563,37 +758,7 @@ public class Main_Window extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Main_Window.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Main_Window.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Main_Window.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Main_Window.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new Main_Window().setVisible(true);
-            }
-        });
-    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Btn_Choose_Image;
@@ -605,11 +770,14 @@ public class Main_Window extends javax.swing.JFrame {
     private javax.swing.JButton Btn_Previous;
     private javax.swing.JButton Btn_Update;
     private javax.swing.JTable JTable_Products;
+    private javax.swing.JTextField category;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lbl_image;
@@ -617,5 +785,6 @@ public class Main_Window extends javax.swing.JFrame {
     private javax.swing.JTextField txt_id;
     private javax.swing.JTextField txt_name;
     private javax.swing.JTextField txt_price;
+    private javax.swing.JTextField type;
     // End of variables declaration//GEN-END:variables
 }
